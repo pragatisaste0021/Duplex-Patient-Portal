@@ -36,4 +36,24 @@ build/
 .postman
 /postman
 
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Database dumps and backups
+*.dump
+*.sql
+*.sql.gz
+
+# Keycloak exports (may contain user data and password hashes)
+keycloak-export/
+
+
+# Java build output
+**/target/
+
+# Local logs
+*.log
+
 AGENTS.md

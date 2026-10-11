@@ -31,6 +31,7 @@ services:
       KC_DB_URL_DATABASE: keycloak
       KC_DB_USERNAME: keycloak_app
       KC_DB_PASSWORD: password
+      KC_HOSTNAME: http://localhost:9090
     depends_on:
       - db
     volumes:
@@ -46,6 +47,63 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: insurance
       RABBITMQ_DEFAULT_PASS: password
+
+
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: duplex-frontend
+    ports:
+      - "8080:8080"
+    environment:
+      # DATABASE_URL: jdbc:postgresql://db:5432/postgres
+      # DATABASE_USERNAME: admin
+      # DATABASE_PASSWORD: password
+
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+
+      KEYCLOAK_BASE_URL: http://keycloak:8080
+      KEYCLOAK_ISSUER_URL: http://localhost:9090
+
+      APP_BASE_URL: http://localhost:8080
+
+      # RABBITMQ_HOST: rabbitmq
+      # RABBITMQ_PORT: 5672
+      # RABBITMQ_USERNAME: insurance
+      # RABBITMQ_PASSWORD: password
+
+      RABBITMQ_HOST: ${CLOUDAMQP_HOST}
+      RABBITMQ_PORT: ${CLOUDAMQP_PORT}
+      RABBITMQ_USERNAME: ${CLOUDAMQP_USERNAME}
+      RABBITMQ_PASSWORD: ${CLOUDAMQP_PASSWORD}
+      RABBITMQ_VHOST: ${CLOUDAMQP_VHOST}
+      RABBITMQ_SSL_ENABLED: ${CLOUDAMQP_SSL_ENABLED}
+
+      KEYCLOAK_FRONTEND_CLIENT_SECRET: ${KEYCLOAK_FRONTEND_CLIENT_SECRET}
+      KEYCLOAK_BACKEND_CLIENT_SECRET: ${KEYCLOAK_BACKEND_CLIENT_SECRET}
+    depends_on:
+      - db
+      - keycloak
+      - rabbitmq
+
+  insurance:
+    build:
+      context: .
+      dockerfile: Dockerfile.insurance
+    container_name: duplex-insurance
+    environment:
+      SPRING_RABBITMQ_HOST: ${CLOUDAMQP_HOST}
+      SPRING_RABBITMQ_PORT: ${CLOUDAMQP_PORT}
+      SPRING_RABBITMQ_USERNAME: ${CLOUDAMQP_USERNAME}
+      SPRING_RABBITMQ_PASSWORD: ${CLOUDAMQP_PASSWORD}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${CLOUDAMQP_VHOST}
+      SPRING_RABBITMQ_SSL_ENABLED: true
+    depends_on:
+      - rabbitmq
 
 volumes:
   postgres-data:

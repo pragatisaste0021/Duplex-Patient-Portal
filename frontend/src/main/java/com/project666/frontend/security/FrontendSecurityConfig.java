@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +34,9 @@ public class FrontendSecurityConfig {
     private final ClientRegistrationRepository clientRegistrationRepository;
     @Value("${app.base-url}")
     private String appBaseUrl;
+
+    @Value("${keycloak.issuer-url}")
+    private String keycloakIssuerUrl;
 
     @Bean
     @Order(2)
@@ -55,9 +59,28 @@ public class FrontendSecurityConfig {
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
         )
+        // .logout(logout -> logout
+        //     .logoutUrl("/logout")
+        //     .logoutSuccessHandler(oidcLogoutSuccessHandler())
+        // );
         .logout(logout -> logout
             .logoutUrl("/logout")
-            .logoutSuccessHandler(oidcLogoutSuccessHandler())
+            .logoutSuccessHandler((request, response, authentication) -> {
+
+                if (authentication.getPrincipal() instanceof OidcUser oidcUser) {
+
+                    String idToken = oidcUser.getIdToken().getTokenValue();
+
+                    String logoutUrl =
+                            keycloakIssuerUrl + "/realms/patient-portal/protocol/openid-connect/logout"
+                            + "?id_token_hint=" + idToken
+                            + "&post_logout_redirect_uri=" + appBaseUrl;
+
+                    response.sendRedirect(logoutUrl);
+                } else {
+                    response.sendRedirect(appBaseUrl);
+                }
+            })
         );
         
         return http.build();
