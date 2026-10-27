@@ -10,9 +10,11 @@ import com.project666.backend.domain.entity.LabBill;
 import com.project666.backend.domain.message.InsuranceCompletedMessage;
 import com.project666.backend.repository.AppointmentBillRepository;
 import com.project666.backend.repository.LabBillRepository;
+import lombok.extern.slf4j.Slf4j;
 
 import lombok.RequiredArgsConstructor;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InsuranceCompletedListener {
@@ -22,6 +24,14 @@ public class InsuranceCompletedListener {
 
     @RabbitListener(queues = RabbitConfig.INSURANCE_COMPLETED_QUEUE)
     public void handleInsuranceCompleted(InsuranceCompletedMessage message) {
+
+        log.info(
+            "Received billing.insurance.completed for billId={}, insuranceCover={}, patientPayment={}",
+            message.getBillId(),
+            message.getInsuranceCoverAmount(),
+            message.getPatientPaymentAmount()
+        );
+
         AppointmentBill appointmentBill = appointmentBillRepository.findById(message.getBillId()).orElse(null);
         if (appointmentBill != null) {
             if (!BillStatusEnum.VIEWING.equals(appointmentBill.getStatus())) {

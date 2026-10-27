@@ -13,7 +13,9 @@ import com.project666.insurance.message.BillCreatedMessage;
 import com.project666.insurance.message.InsuranceCompletedMessage;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InsuranceListener {
@@ -23,6 +25,7 @@ public class InsuranceListener {
 
     @RabbitListener(queues = RabbitConfig.BILL_CREATED_QUEUE)
     public void handleBillCreated(BillCreatedMessage message) {
+        log.info("Received insurance.bill.created for billId={}", message.getBillId());
         int percent = random.nextInt(61);
         BigDecimal insuranceCoverAmount = message.getAmount()
             .multiply(BigDecimal.valueOf(percent))
@@ -38,6 +41,13 @@ public class InsuranceListener {
                 insuranceCoverAmount,
                 patientPaymentAmount
             )
+        );
+
+        log.info(
+            "Published billing.insurance.completed for billId={}, insuranceCover={}, patientPayment={}",
+            message.getBillId(),
+            insuranceCoverAmount,
+            patientPaymentAmount
         );
     }
 }
